@@ -85,7 +85,9 @@ export function Source({ selectedArticle }: SourcePanelProps) {
         <CardContent className="p-6 flex flex-col items-center justify-center h-full min-h-[400px] text-center">
           <Database className="h-12 w-12 text-muted-foreground/50 mb-4" />
           <p className="text-muted-foreground text-sm">
-            자료를 선택하면 출처와 근거 청크가 표시됩니다
+            자료를 선택하면 출처와 근거 청크가
+            <br />
+            표시됩니다
           </p>
         </CardContent>
       </Card>
