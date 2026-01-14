@@ -1,5 +1,13 @@
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { TrendingUp, Users, FileText, Activity } from 'lucide-react';
+import {
+  TrendingUp,
+  Users,
+  FileText,
+  Activity,
+  Loader2,
+  AlertCircle,
+} from 'lucide-react';
 import {
   BarChart,
   Bar,
@@ -10,20 +18,9 @@ import {
   Pie,
   Cell,
 } from 'recharts';
-
-const barData = [
-  { name: '더불어민주당', value: 42 },
-  { name: '국민의힘', value: 38 },
-  { name: '조국혁신당', value: 12 },
-  { name: '기타', value: 8 },
-];
-
-const pieData = [
-  { name: '법안', value: 45 },
-  { name: '예산', value: 25 },
-  { name: '청원', value: 20 },
-  { name: '기타', value: 10 },
-];
+import { getStats } from '@/api/statsApi';
+import type { StatsData } from '@/types/api';
+import { mockBarData, mockPieData } from '@/../data/stats';
 
 const COLORS = [
   'var(--color-chart-1)',
@@ -33,6 +30,62 @@ const COLORS = [
 ];
 
 export function Stats() {
+  const [statsData, setStatsData] = useState<StatsData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    loadStats();
+  }, []);
+
+  const loadStats = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const data = await getStats();
+      setStatsData(data);
+    } catch (err) {
+      console.error('통계 데이터 로드 실패:', err);
+      setError('통계를 불러올 수 없습니다.');
+      // 에러 시 목업 데이터 사용
+      setStatsData({
+        todayCount: 24,
+        participantCount: 156,
+        partyActivity: mockBarData,
+        documentTypes: mockPieData,
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 로딩 상태
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <Card className="border-border">
+          <CardContent className="p-8 flex items-center justify-center">
+            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // 에러 상태
+  if (error && !statsData) {
+    return (
+      <div className="space-y-4">
+        <Card className="border-destructive/50 bg-destructive/5">
+          <CardContent className="p-4 flex items-center gap-2">
+            <AlertCircle className="h-4 w-4 text-destructive" />
+            <p className="text-sm text-destructive">{error}</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       {/* 요약 카드들 */}
@@ -43,7 +96,9 @@ export function Stats() {
               <FileText className="h-4 w-4 text-primary" />
               <span className="text-xs text-muted-foreground">오늘 발의</span>
             </div>
-            <p className="text-2xl font-bold text-foreground mt-1">24</p>
+            <p className="text-2xl font-bold text-foreground mt-1">
+              {statsData?.todayCount || 0}
+            </p>
           </CardContent>
         </Card>
         <Card className="border-border">
@@ -52,7 +107,9 @@ export function Stats() {
               <Users className="h-4 w-4 text-primary" />
               <span className="text-xs text-muted-foreground">참여 의원</span>
             </div>
-            <p className="text-2xl font-bold text-foreground mt-1">156</p>
+            <p className="text-2xl font-bold text-foreground mt-1">
+              {statsData?.participantCount || 0}
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -67,7 +124,10 @@ export function Stats() {
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={160}>
-            <BarChart data={barData} layout="vertical">
+            <BarChart
+              data={statsData?.partyActivity || mockBarData}
+              layout="vertical"
+            >
               <XAxis type="number" hide />
               <YAxis
                 type="category"
@@ -100,7 +160,7 @@ export function Stats() {
           <ResponsiveContainer width="100%" height={140}>
             <PieChart>
               <Pie
-                data={pieData}
+                data={statsData?.documentTypes || mockPieData}
                 cx="50%"
                 cy="50%"
                 innerRadius={35}
@@ -108,7 +168,7 @@ export function Stats() {
                 paddingAngle={2}
                 dataKey="value"
               >
-                {pieData.map((_, index) => (
+                {(statsData?.documentTypes || mockPieData).map((_, index) => (
                   <Cell
                     key={`cell-${index}`}
                     fill={COLORS[index % COLORS.length]}
@@ -118,7 +178,7 @@ export function Stats() {
             </PieChart>
           </ResponsiveContainer>
           <div className="grid grid-cols-2 gap-2 mt-2">
-            {pieData.map((item, index) => (
+            {(statsData?.documentTypes || mockPieData).map((item, index) => (
               <div key={item.name} className="flex items-center gap-2">
                 <div
                   className="w-2 h-2 rounded-full"
