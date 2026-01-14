@@ -14,7 +14,7 @@ export default defineConfig({
         secure: true,
         rewrite: (path) => path,
         configure: (proxy, _options) => {
-          proxy.on('proxyReq', (proxyReq, req, _res) => {
+          proxy.on('proxyReq', (proxyReq, _req, _res) => {
             // Cloudflare 우회를 위한 헤더 설정
             proxyReq.setHeader('User-Agent', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
             proxyReq.setHeader('Accept', 'application/json, text/plain, */*');
