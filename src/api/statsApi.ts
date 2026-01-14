@@ -11,7 +11,7 @@ import type { StatsData } from '@/types/api';
 export async function getStats(): Promise<StatsData> {
   try {
     // 방법 1: 통계용 쿼리로 검색 API 활용
-    const response = await api.get('/search', {
+    const response = await api.get('/api/search', {
       params: {
         q: '통계',
         limit: 1,

@@ -12,7 +12,7 @@ export async function getSourceDetail(
   articleId: string
 ): Promise<SourceDetail> {
   try {
-    const response = await api.get('/search', {
+    const response = await api.get('/api/search', {
       params: {
         q: `id:${articleId}`,
         limit: 5,

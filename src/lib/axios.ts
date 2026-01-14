@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Axios 인스턴스 생성
 export const api = axios.create({
-  baseURL: 'https://jungjung-backend.oursophy.com',
+  baseURL: '', // 프록시 사용을 위해 상대 경로 사용 (vite.config.ts의 proxy 설정 참조)
   headers: {
     'Content-Type': 'application/json',
   },

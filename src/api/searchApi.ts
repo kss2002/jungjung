@@ -10,7 +10,7 @@ export async function searchArticles(
   options?: Partial<SearchParams>
 ): Promise<Article[]> {
   try {
-    const response = await api.get<SearchResponse>('/search', {
+    const response = await api.get<SearchResponse>('/api/search', {
       params: {
         q: query,
         limit: options?.limit ?? 5,
