@@ -1,85 +1,58 @@
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { FileText, Link2, Quote, ChevronRight, Database } from 'lucide-react';
+import {
+  FileText,
+  Link2,
+  Quote,
+  ChevronRight,
+  Database,
+  Loader2,
+  AlertCircle,
+} from 'lucide-react';
+import { getSourceDetail } from '@/api/sourceApi';
+import type { SourceDetail } from '@/types/api';
+import { mockSourceData } from '@/../data/sources';
 
 interface SourcePanelProps {
   selectedArticle: string | null;
 }
 
-const sourceData: Record<
-  string,
-  {
-    title: string;
-    chunks: {
-      id: number;
-      content: string;
-      relevance: number;
-      source: string;
-    }[];
-    references: { title: string; url: string; type: string }[];
-  }
-> = {
-  '1': {
-    title: '2026년도 제1회 추가경정예산안 국회 제출',
-    chunks: [
-      {
-        id: 1,
-        content:
-          '정부는 2026년 1월 9일 국회에 2026년도 제1회 추가경정예산안을 제출하였다. 이번 추경 규모는 총 15조원으로...',
-        relevance: 98,
-        source: '기획재정위원회 보도자료',
-      },
-      {
-        id: 2,
-        content:
-          '추경예산의 주요 편성 내역은 민생안정 지원 8조원, 경제활성화 4조원, 재해복구 3조원으로 구성되어 있다...',
-        relevance: 95,
-        source: '예산정책처 분석보고서',
-      },
-      {
-        id: 3,
-        content:
-          '이번 추경은 최근 경기 둔화에 대응하고 서민경제를 지원하기 위한 목적으로 편성되었으며...',
-        relevance: 87,
-        source: '국회 본회의 회의록',
-      },
-    ],
-    references: [
-      { title: '기획재정부 보도자료', url: '#', type: '공식' },
-      { title: '국회 의안정보시스템', url: '#', type: '공식' },
-      { title: '예산정책처 분석', url: '#', type: '분석' },
-    ],
-  },
-  '2': {
-    title: '인공지능 산업 진흥 및 윤리에 관한 법률안',
-    chunks: [
-      {
-        id: 1,
-        content:
-          '본 법률안은 인공지능 기술의 건전한 발전과 국민의 권익 보호를 위하여 인공지능 산업 진흥 및 윤리에 관한 기본적인 사항을 정함을 목적으로 한다...',
-        relevance: 99,
-        source: '의안원문',
-      },
-      {
-        id: 2,
-        content:
-          'AI 윤리원칙에는 인간 존엄성 존중, 프라이버시 보호, 다양성 존중, 투명성 보장, 책임성 확보 등이 포함된다...',
-        relevance: 92,
-        source: '법안 검토보고서',
-      },
-    ],
-    references: [
-      { title: '의안정보시스템 원문', url: '#', type: '공식' },
-      { title: '과기정통부 정책자료', url: '#', type: '참고' },
-    ],
-  },
-};
-
 export function Source({ selectedArticle }: SourcePanelProps) {
-  const data = selectedArticle ? sourceData[selectedArticle] : null;
+  const [data, setData] = useState<SourceDetail | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  if (!data) {
+  useEffect(() => {
+    if (!selectedArticle) {
+      setData(null);
+      return;
+    }
+
+    loadSourceDetail(selectedArticle);
+  }, [selectedArticle]);
+
+  const loadSourceDetail = async (articleId: string) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const sourceDetail = await getSourceDetail(articleId);
+      setData(sourceDetail);
+    } catch (err) {
+      console.error('출처 데이터 로드 실패:', err);
+      setError('출처 정보를 불러올 수 없습니다.');
+      // 에러 시 목업 데이터 사용
+      if (mockSourceData[articleId]) {
+        setData(mockSourceData[articleId]);
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 선택된 article이 없을 때
+  if (!selectedArticle) {
     return (
       <Card className="border-border h-full">
         <CardContent className="p-6 flex flex-col items-center justify-center h-full min-h-[400px] text-center">
@@ -93,6 +66,32 @@ export function Source({ selectedArticle }: SourcePanelProps) {
       </Card>
     );
   }
+
+  // 로딩 상태
+  if (isLoading) {
+    return (
+      <Card className="border-border h-full">
+        <CardContent className="p-6 flex flex-col items-center justify-center h-full min-h-[400px]">
+          <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+          <p className="text-sm text-muted-foreground">출처 정보 로딩 중...</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // 에러 상태
+  if (error && !data) {
+    return (
+      <Card className="border-border h-full">
+        <CardContent className="p-6 flex flex-col items-center justify-center h-full min-h-[400px] text-center">
+          <AlertCircle className="h-12 w-12 text-destructive mb-4" />
+          <p className="text-sm text-destructive">{error}</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!data) return null;
 
   return (
     <div className="space-y-4">
