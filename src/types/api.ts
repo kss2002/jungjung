@@ -32,7 +32,7 @@ export interface SearchDocument {
 
 export interface SearchResponse {
   query: string;
-  route: 'rag' | 'general';
+  route: 'rag' | 'general' | 'LLM';
   answer?: string;
   documents?: SearchDocument[];
   visualization?: unknown;
