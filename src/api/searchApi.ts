@@ -21,23 +21,35 @@ export async function searchArticles(
 
     const data = response.data;
 
-    // 실제 API 응답 구조에 맞게 변환
-    // TODO: 백엔드 응답 구조 확인 후 조정 필요
-    if (data.articles) {
-      return data.articles;
-    }
-
-    // 임시: documents를 articles 형태로 변환
-    if (data.documents) {
+    // RAG 모드: documents가 있는 경우
+    if (data.documents && data.documents.length > 0) {
       return data.documents.map((doc, index) => ({
         id: String(index + 1),
         title: doc.content.substring(0, 50) + '...',
-        category: '검색결과',
+        category: data.route === 'rag' ? 'RAG 검색' : '검색결과',
         source: (doc.metadata?.source as string) || '국회',
         date: new Date().toISOString().split('T')[0],
         summary: doc.content,
         tags: [],
       }));
+    }
+
+    // LLM 모드: answer가 있는 경우 (일반 응답)
+    if (data.answer) {
+      return [{
+        id: '1',
+        title: `AI 답변: ${query}`,
+        category: data.route === 'LLM' ? 'AI 답변' : '검색결과',
+        source: 'AI Assistant',
+        date: new Date().toISOString().split('T')[0],
+        summary: data.answer,
+        tags: ['AI', '답변'],
+      }];
+    }
+
+    // articles가 있는 경우 (기존 로직)
+    if (data.articles) {
+      return data.articles;
     }
 
     return [];
